@@ -23,7 +23,15 @@
     "inspector",
     "javascript"
   ],
-  "author": "Your Name",
+  "author": "Akshat Rane <akshatrane2007@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akshatjoddd/password-checker-npm-package.git"
+  },
+  "bugs": {
+    "url": "https://github.com/akshatjoddd/password-checker-npm-package/issues"
+  },
+  "homepage": "https://github.com/akshatjoddd/password-checker-npm-package#readme",
   "license": "MIT",
   "engines": {
     "node": ">=18"
