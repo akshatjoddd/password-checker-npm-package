@@ -1,0 +1,31 @@
+{
+  "name": "password-inspector",
+  "version": "1.0.0",
+  "description": "A lightweight, dependency-free password strength analyzer for JavaScript.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "password",
+    "password-strength",
+    "security",
+    "validation",
+    "inspector",
+    "javascript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
