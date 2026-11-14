@@ -1,130 +1,117 @@
-/**
- * password-inspector
- *
- * Analyze password characteristics locally.
- * This package does not transmit, persist, or log passwords.
- */
-
-const COMMON_PASSWORDS = new Set([
-  "123456",
-  "123456789",
-  "12345678",
-  "12345",
-  "1234567",
-  "password",
-  "password1",
-  "password123",
-  "qwerty",
-  "qwerty123",
-  "111111",
-  "123123",
-  "abc123",
-  "iloveyou",
-  "admin",
-  "welcome",
-  "letmein",
-  "monkey",
-  "dragon",
-  "football",
-  "baseball",
-  "sunshine",
-  "princess",
-  "master",
-  "login",
-  "passw0rd"
-]);
-
-const DICTIONARY_TERMS = [
-  "password",
-  "welcome",
-  "admin",
-  "letmein",
-  "qwerty",
-  "iloveyou",
-  "monkey",
-  "dragon",
-  "football",
-  "baseball",
-  "hello",
-  "sunshine",
-  "princess",
-  "secret",
-  "login",
-  "trustno",
-  "computer"
+var COMMON_PASSWORDS = [
+  "123456", "123456789", "12345678", "12345", "1234567",
+  "password", "password1", "password123", "qwerty", "qwerty123",
+  "111111", "123123", "abc123", "iloveyou", "admin",
+  "welcome", "letmein", "monkey", "dragon", "football",
+  "baseball", "sunshine", "princess", "master", "login", "passw0rd"
 ];
 
-const KEYBOARD_SEQUENCES = [
-  "qwerty",
-  "asdfgh",
-  "zxcvbn",
-  "qwert",
-  "asdf",
-  "zxcv",
-  "poiuy",
-  "lkjhg",
-  "mnbvc"
+var DICTIONARY_TERMS = [
+  "password", "welcome", "admin", "letmein", "qwerty", "iloveyou",
+  "monkey", "dragon", "football", "baseball", "hello", "sunshine",
+  "princess", "secret", "login", "trustno", "computer"
 ];
+
+var KEYBOARD_SEQUENCES = [
+  "qwerty", "asdfgh", "zxcvbn", "qwert", "asdf", "zxcv", "poiuy", "lkjhg", "mnbvc"
+];
+
+function isCommon(password) {
+  var p = password.toLowerCase();
+  for (var i = 0; i < COMMON_PASSWORDS.length; i++) {
+    if (COMMON_PASSWORDS[i] == p) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function normalizeForPatternChecks(password) {
-  return password
-    .toLowerCase()
-    .replace(/@/g, "a")
-    .replace(/0/g, "o")
-    .replace(/[1!|]/g, "i")
-    .replace(/3/g, "e")
-    .replace(/4/g, "a")
-    .replace(/5/g, "s")
-    .replace(/7/g, "t")
-    .replace(/\$/g, "s")
-    .replace(/[^a-z0-9]/g, "");
+  var p = password.toLowerCase();
+  p = p.replace(/@/g, "a");
+  p = p.replace(/0/g, "o");
+  p = p.replace(/1/g, "i");
+  p = p.replace(/!/g, "i");
+  p = p.replace(/\|/g, "i");
+  p = p.replace(/3/g, "e");
+  p = p.replace(/4/g, "a");
+  p = p.replace(/5/g, "s");
+  p = p.replace(/7/g, "t");
+  p = p.replace(/\$/g, "s");
+  p = p.replace(/[^a-z0-9]/g, "");
+  return p;
 }
 
 function getCharacterTypes(password) {
+  var lower = false;
+  var upper = false;
+  var nums = false;
+  var syms = false;
+  var spaces = false;
+
+  if (/[a-z]/.test(password)) lower = true;
+  if (/[A-Z]/.test(password)) upper = true;
+  if (/\d/.test(password)) nums = true;
+  if (/[^A-Za-z0-9\s]/u.test(password)) syms = true;
+  if (/\s/u.test(password)) spaces = true;
+
   return {
-    lowercase: /[a-z]/.test(password),
-    uppercase: /[A-Z]/.test(password),
-    numbers: /\d/.test(password),
-    symbols: /[^A-Za-z0-9\s]/u.test(password),
-    spaces: /\s/u.test(password)
+    lowercase: lower,
+    uppercase: upper,
+    numbers: nums,
+    symbols: syms,
+    spaces: spaces
   };
 }
 
 function getCharacterPoolSize(types) {
-  let pool = 0;
-  if (types.lowercase) pool += 26;
-  if (types.uppercase) pool += 26;
-  if (types.numbers) pool += 10;
-  if (types.symbols) pool += 33;
-  if (types.spaces) pool += 1;
+  var pool = 0;
+  if (types.lowercase == true) {
+    pool = pool + 26;
+  }
+  if (types.uppercase == true) {
+    pool = pool + 26;
+  }
+  if (types.numbers == true) {
+    pool = pool + 10;
+  }
+  if (types.symbols == true) {
+    pool = pool + 33;
+  }
+  if (types.spaces == true) {
+    pool = pool + 1;
+  }
   return pool;
 }
 
-function containsSequentialRun(password, minimumLength = 3) {
-  const value = password.toLowerCase();
+function containsSequentialRun(password, minimumLength) {
+  if (minimumLength == undefined) {
+    minimumLength = 3;
+  }
+  var value = password.toLowerCase();
 
-  for (let i = 0; i <= value.length - minimumLength; i += 1) {
-    let ascending = 1;
-    let descending = 1;
+  for (var i = 0; i <= value.length - minimumLength; i++) {
+    var ascending = 1;
+    var descending = 1;
 
-    for (let j = i + 1; j < value.length; j += 1) {
-      const previous = value.charCodeAt(j - 1);
-      const current = value.charCodeAt(j);
+    for (var j = i + 1; j < value.length; j++) {
+      var previous = value.charCodeAt(j - 1);
+      var current = value.charCodeAt(j);
 
-      if (current === previous + 1 && ascending === j - i) {
-        ascending += 1;
-      } else if (current !== previous + 1) {
+      if (current == previous + 1 && ascending == j - i) {
+        ascending = ascending + 1;
+      } else if (current != previous + 1) {
         break;
       }
     }
 
-    for (let j = i + 1; j < value.length; j += 1) {
-      const previous = value.charCodeAt(j - 1);
-      const current = value.charCodeAt(j);
+    for (var k = i + 1; k < value.length; k++) {
+      var prev2 = value.charCodeAt(k - 1);
+      var curr2 = value.charCodeAt(k);
 
-      if (current === previous - 1 && descending === j - i) {
-        descending += 1;
-      } else if (current !== previous - 1) {
+      if (curr2 == prev2 - 1 && descending == k - i) {
+        descending = descending + 1;
+      } else if (curr2 != prev2 - 1) {
         break;
       }
     }
@@ -137,19 +124,23 @@ function containsSequentialRun(password, minimumLength = 3) {
   return false;
 }
 
-function hasRepeatedCharacter(password, minimumLength = 3) {
-  return new RegExp(`(.)\\1{${minimumLength - 1},}`, "u").test(password);
+function hasRepeatedCharacter(password, minimumLength) {
+  if (minimumLength == undefined) {
+    minimumLength = 3;
+  }
+  var re = new RegExp("(.)\\1{" + (minimumLength - 1) + ",}", "u");
+  return re.test(password);
 }
 
 function hasRepeatedChunk(password) {
-  const value = password.toLowerCase();
+  var value = password.toLowerCase();
 
-  for (let chunkLength = 2; chunkLength <= Math.floor(value.length / 2); chunkLength += 1) {
-    for (let i = 0; i + chunkLength * 2 <= value.length; i += 1) {
-      const first = value.slice(i, i + chunkLength);
-      const second = value.slice(i + chunkLength, i + chunkLength * 2);
+  for (var chunkLength = 2; chunkLength <= Math.floor(value.length / 2); chunkLength++) {
+    for (var i = 0; i + chunkLength * 2 <= value.length; i++) {
+      var first = value.slice(i, i + chunkLength);
+      var second = value.slice(i + chunkLength, i + chunkLength * 2);
 
-      if (first === second) {
+      if (first == second) {
         return true;
       }
     }
@@ -159,70 +150,94 @@ function hasRepeatedChunk(password) {
 }
 
 function hasKeyboardSequence(password) {
-  const value = password.toLowerCase();
-  return KEYBOARD_SEQUENCES.some((sequence) =>
-    value.includes(sequence) || value.includes([...sequence].reverse().join(""))
-  );
+  var value = password.toLowerCase();
+  for (var i = 0; i < KEYBOARD_SEQUENCES.length; i++) {
+    var seq = KEYBOARD_SEQUENCES[i];
+    var reversed = seq.split("").reverse().join("");
+    if (value.indexOf(seq) != -1 || value.indexOf(reversed) != -1) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function hasDictionaryTerm(password) {
-  const normalized = normalizeForPatternChecks(password);
-  return DICTIONARY_TERMS.some((term) => normalized.includes(term));
+  var normalized = normalizeForPatternChecks(password);
+  for (var i = 0; i < DICTIONARY_TERMS.length; i++) {
+    if (normalized.indexOf(DICTIONARY_TERMS[i]) != -1) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function calculateBaseScore(length) {
-  if (length === 0) return 0;
-  if (length < 8) return length * 2.5;
-  if (length < 12) return 20 + (length - 8) * 3;
-  if (length < 16) return 32 + (length - 12) * 3;
-  return 44 + Math.min(length - 16, 12) * 1.5;
+  if (length == 0) {
+    return 0;
+  }
+  if (length < 8) {
+    return length * 2.5;
+  }
+  if (length < 12) {
+    return 20 + (length - 8) * 3;
+  }
+  if (length < 16) {
+    return 32 + (length - 12) * 3;
+  }
+  var extra = length - 16;
+  if (extra > 12) {
+    extra = 12;
+  }
+  return 44 + extra * 1.5;
 }
 
 function getStrengthLabel(score) {
-  if (score < 20) return "Very Weak";
-  if (score < 40) return "Weak";
-  if (score < 60) return "Fair";
-  if (score < 80) return "Strong";
-  return "Very Strong";
+  if (score < 20) {
+    return "Very Weak";
+  } else if (score < 40) {
+    return "Weak";
+  } else if (score < 60) {
+    return "Fair";
+  } else if (score < 80) {
+    return "Strong";
+  } else {
+    return "Very Strong";
+  }
 }
 
-/**
- * Inspect a password and return a score, detected characteristics,
- * issues, and improvement suggestions.
- *
- * @param {string} password Password to inspect.
- * @returns {{
- *   score: number,
- *   strength: string,
- *   length: number,
- *   characterTypes: object,
- *   estimatedEntropyBits: number,
- *   issues: string[],
- *   suggestions: string[]
- * }}
- */
-export function inspectPassword(password) {
-  if (typeof password !== "string") {
+function inspectPassword(password) {
+  if (typeof password != "string") {
     throw new TypeError("Password must be a string.");
   }
 
-  const length = [...password].length;
-  const characterTypes = getCharacterTypes(password);
-  const activeTypes = Object.values(characterTypes).filter(Boolean).length;
-  const poolSize = getCharacterPoolSize(characterTypes);
+  var length = [...password].length;
+  var characterTypes = getCharacterTypes(password);
 
-  // This is a theoretical character-pool estimate, not a cracking-time prediction.
-  const estimatedEntropyBits =
-    length > 0 && poolSize > 0
-      ? Math.round(length * Math.log2(poolSize) * 10) / 10
-      : 0;
+  var activeTypes = 0;
+  if (characterTypes.lowercase) activeTypes = activeTypes + 1;
+  if (characterTypes.uppercase) activeTypes = activeTypes + 1;
+  if (characterTypes.numbers) activeTypes = activeTypes + 1;
+  if (characterTypes.symbols) activeTypes = activeTypes + 1;
+  if (characterTypes.spaces) activeTypes = activeTypes + 1;
 
-  const issues = [];
-  const suggestions = [];
-  let score = calculateBaseScore(length);
+  var poolSize = getCharacterPoolSize(characterTypes);
 
-  score += activeTypes * 7;
-  score += Math.min(15, estimatedEntropyBits / 8);
+  var estimatedEntropyBits = 0;
+  if (length > 0 && poolSize > 0) {
+    estimatedEntropyBits = Math.round(length * Math.log2(poolSize) * 10) / 10;
+  }
+
+  var issues = [];
+  var suggestions = [];
+  var score = calculateBaseScore(length);
+
+  score = score + activeTypes * 7;
+
+  var entropyBonus = estimatedEntropyBits / 8;
+  if (entropyBonus > 15) {
+    entropyBonus = 15;
+  }
+  score = score + entropyBonus;
 
   if (length < 8) {
     issues.push("Password is shorter than 8 characters.");
@@ -232,77 +247,89 @@ export function inspectPassword(password) {
     suggestions.push("Increase the password length to at least 12 characters.");
   }
 
-  if (!characterTypes.lowercase) {
+  if (characterTypes.lowercase == false) {
     issues.push("No lowercase letters detected.");
     suggestions.push("Consider including lowercase letters.");
   }
 
-  if (!characterTypes.uppercase) {
+  if (characterTypes.uppercase == false) {
     issues.push("No uppercase letters detected.");
     suggestions.push("Consider including uppercase letters.");
   }
 
-  if (!characterTypes.numbers) {
+  if (characterTypes.numbers == false) {
     issues.push("No numbers detected.");
     suggestions.push("Consider including numbers, without using predictable sequences.");
   }
 
-  if (!characterTypes.symbols) {
+  if (characterTypes.symbols == false) {
     issues.push("No symbols detected.");
     suggestions.push("Consider including symbols if the service allows them.");
   }
 
-  if (COMMON_PASSWORDS.has(password.toLowerCase())) {
+  var common = isCommon(password);
+
+  if (common) {
     issues.push("This password matches a commonly used password.");
     suggestions.push("Avoid common passwords and choose a unique passphrase.");
-    score -= 45;
+    score = score - 45;
   }
 
-  if (hasDictionaryTerm(password) && !COMMON_PASSWORDS.has(password.toLowerCase())) {
-    issues.push("Password contains a common word or predictable term.");
-    suggestions.push("Avoid common words, names, and predictable substitutions.");
-    score -= 12;
+  if (hasDictionaryTerm(password)) {
+    if (common == false) {
+      issues.push("Password contains a common word or predictable term.");
+      suggestions.push("Avoid common words, names, and predictable substitutions.");
+      score = score - 12;
+    }
   }
 
   if (containsSequentialRun(password)) {
     issues.push("Password contains a predictable sequence such as 123 or abc.");
     suggestions.push("Avoid consecutive letters or numbers.");
-    score -= 8;
+    score = score - 8;
   }
 
   if (hasKeyboardSequence(password)) {
     issues.push("Password contains a predictable keyboard sequence.");
     suggestions.push("Avoid keyboard patterns such as qwerty or asdf.");
-    score -= 12;
+    score = score - 12;
   }
 
   if (hasRepeatedCharacter(password)) {
     issues.push("Password contains repeated characters.");
     suggestions.push("Avoid repeating the same character several times.");
-    score -= 12;
+    score = score - 12;
   }
 
   if (hasRepeatedChunk(password)) {
     issues.push("Password contains a repeated character pattern.");
     suggestions.push("Avoid repeating chunks such as abcabc or 1212.");
-    score -= 10;
+    score = score - 10;
   }
 
-  score = Math.max(0, Math.min(100, Math.round(score)));
+  score = Math.round(score);
+  if (score < 0) {
+    score = 0;
+  }
+  if (score > 100) {
+    score = 100;
+  }
 
-  if (issues.length === 0) {
+  if (issues.length == 0) {
     suggestions.push("No obvious issues were detected by these basic checks.");
   }
 
-  return {
-    score,
+  var result = {
+    score: score,
     strength: getStrengthLabel(score),
-    length,
-    characterTypes,
-    estimatedEntropyBits,
-    issues,
-    suggestions
+    length: length,
+    characterTypes: characterTypes,
+    estimatedEntropyBits: estimatedEntropyBits,
+    issues: issues,
+    suggestions: suggestions
   };
+
+  return result;
 }
 
-export { getStrengthLabel };
+export { inspectPassword, getStrengthLabel };
